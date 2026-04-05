@@ -1,0 +1,52 @@
+{
+  "name": "playwright-aa-framework",
+  "version": "1.0.0",
+  "description": "Production-ready Playwright automation framework for Automation Anywhere Community Edition with complete PDF upload/download workflow",
+  "type": "module",
+  "scripts": {
+    "generate:pdf": "node test-data/generate-sample.js",
+    "pretest": "node test-data/generate-sample.js",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --project=chromium-ui",
+    "test:api": "npx playwright test --project=api",
+    "test:uc1": "npx playwright test tests/ui/uc1-message-box.spec.js",
+    "test:uc2": "npx playwright test tests/ui/uc2-form-upload.spec.js",
+    "test:uc3": "npx playwright test tests/api/uc3-learning-instance.spec.js",
+    "test:smoke": "npx playwright test --grep @smoke",
+    "doctor": "node scripts/doctor.js",
+    "test:headed": "npx playwright test --project=chromium-ui --headed",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report",
+    "allure:generate": "npx allure generate allure-results --clean -o allure-report",
+    "allure:open": "npx allure open allure-report",
+    "portal:dev": "vite --config vite.portal.config.js",
+    "portal:build": "vite build --config vite.portal.config.js",
+    "portal:preview": "vite preview --config vite.portal.config.js",
+    "demo:start": "node demo-server/server.js",
+    "demo:smoke": "cross-env DEMO_MODE=true BASE_URL=http://127.0.0.1:3000 API_BASE_URL=http://127.0.0.1:3000 AA_API_BASE=http://127.0.0.1:3000 AA_USERNAME=harshitha AA_PASSWORD=harshitha21 AA_API_USERNAME=harshitha AA_API_PASSWORD=harshitha21 AA_LOGIN_PATH=/v2/authentication AA_LI_PATH=/iqbot/api/v2/learning-instances npx playwright test --grep @smoke",
+    "demo:test:ui": "cross-env DEMO_MODE=true BASE_URL=http://127.0.0.1:3000 API_BASE_URL=http://127.0.0.1:3000 AA_API_BASE=http://127.0.0.1:3000 AA_USERNAME=harshitha AA_PASSWORD=harshitha21 AA_API_USERNAME=harshitha AA_API_PASSWORD=harshitha21 AA_LOGIN_PATH=/v2/authentication AA_LI_PATH=/iqbot/api/v2/learning-instances npx playwright test --project=chromium-ui",
+    "demo:test:api": "cross-env DEMO_MODE=true BASE_URL=http://127.0.0.1:3000 API_BASE_URL=http://127.0.0.1:3000 AA_API_BASE=http://127.0.0.1:3000 AA_USERNAME=harshitha AA_PASSWORD=harshitha21 AA_API_USERNAME=harshitha AA_API_PASSWORD=harshitha21 AA_LOGIN_PATH=/v2/authentication AA_LI_PATH=/iqbot/api/v2/learning-instances npx playwright test --project=api"
+  },
+  "keywords": [
+    "playwright",
+    "automation-anywhere",
+    "pom",
+    "e2e",
+    "api-testing",
+    "pdf-upload",
+    "file-management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "allure-commandline": "^2.38.1",
+    "allure-playwright": "^3.2.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "pdfkit": "^0.15.2",
+    "vite": "^6.2.0"
+  }
+}

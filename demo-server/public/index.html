@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Runner</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #e50914;
+            --bg-dark: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border: #333333;
+        }
+
+        html.light-mode {
+            --bg-dark: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(229, 9, 20, 0.1);
+            border-left-color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: rgba(229, 9, 20, 0.2);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            height: 60px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 30px;
+            background: var(--border);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary);
+        }
+
+        /* CONTENT */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* CHARTS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* TEST RUNNER */
+        .test-config {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(229, 9, 20, 0.2);
+        }
+
+        .run-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .run-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .run-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* CONSOLE */
+        .console-output {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .console-line {
+            margin: 4px 0;
+            padding: 2px 0;
+        }
+
+        .log-info {
+            color: #0099ff;
+        }
+
+        .log-success {
+            color: #31a24c;
+        }
+
+        .log-error {
+            color: #e50914;
+        }
+
+        .log-warning {
+            color: #ffa500;
+        }
+
+        /* FILE MANAGER */
+        .file-upload-area {
+            background: var(--bg-card);
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(229, 9, 20, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(229, 9, 20, 0.1);
+        }
+
+        .file-list {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .file-item:hover {
+            background: rgba(229, 9, 20, 0.05);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-small:hover {
+            opacity: 0.8;
+        }
+
+        .btn-delete {
+            background: #e50914;
+        }
+
+        /* SETTINGS */
+        .settings-group {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: var(--border);
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.on {
+            background: var(--primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.on::after {
+            left: 24px;
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="nav-item active" onclick="showSection('dashboard')">Dashboard</div>
+            <div class="nav-item" onclick="showSection('runner')">Test Runner</div>
+            <div class="nav-item" onclick="showSection('files')">File Manager</div>
+            <div class="nav-item" onclick="showSection('settings')">Settings</div>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- TOP BAR -->
+            <div class="top-bar">
+                <div class="page-title" id="pageTitle">Dashboard</div>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div id="dashboard" class="content active">
+                <h2 style="margin-bottom: 20px;">Test Statistics</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Tests</div>
+                        <div class="stat-value">18</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Passed</div>
+                        <div class="stat-value" style="color: #31a24c;">17</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Failed</div>
+                        <div class="stat-value" style="color: #e50914;">1</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pass Rate</div>
+                        <div class="stat-value" style="color: #31a24c;">94.4%</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">Test Results Distribution</div>
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Execution Time (seconds)</div>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Weekly Trend</div>
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Browser Compatibility</div>
+                        <canvas id="browserChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEST RUNNER -->
+            <div id="runner" class="content">
+                <h2 style="margin-bottom: 20px;">Run Tests</h2>
+                
+                <div class="test-config">
+                    <div class="form-group">
+                        <label class="form-label">Select Browser</label>
+                        <select class="form-select" id="browser">
+                            <option>Chromium</option>
+                            <option>Firefox</option>
+                            <option>WebKit</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Test URL</label>
+                        <input type="text" class="form-input" id="testUrl" value="https://example.com" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-input" id="username" value="harshitha" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="password" value="harshitha21" />
+                    </div>
+
+                    <button class="run-btn" onclick="runTest()">▶ Run Test</button>
+                </div>
+
+                <div class="console-output" id="console">
+                    <div class="console-line log-info">[INFO] Ready to run tests...</div>
+                </div>
+            </div>
+
+            <!-- FILE MANAGER -->
+            <div id="files" class="content">
+                <h2 style="margin-bottom: 20px;">File Manager</h2>
+                
+                <div class="file-upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div style="font-size: 24px; margin-bottom: 10px;">📁</div>
+                    <div style="font-weight: 600;">Click or drag files here to upload</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Supported: PDF, TXT, JSON, ZIP</div>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" onchange="uploadFile(event)" />
+
+                <div class="file-list" id="fileList">
+                    <div class="file-item">
+                        <div class="file-info">
+                            <div class="file-name">📄 sample-upload.pdf</div>
+                            <div class="file-meta">832.57 KB • Uploaded on 4/5/2026</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn-small" onclick="downloadFile('sample-upload.pdf')">Download</button>
+                            <button class="btn-small btn-delete" onclick="deleteFile('sample-upload.pdf')">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="settings" class="content">
+                <h2 style="margin-bottom: 20px;">Settings</h2>
+                
+                <div class="settings-group">
+                    <div class="settings-title">General</div>
+                    <div class="setting-item">
+                        <div>Email Notifications</div>
+                        <button class="toggle-switch on" onclick="toggleSetting(this)"></button>
+                    </div>
+                    <div class="setting-item">
+                        <div>Auto-run Tests</div>
+                        <button class="toggle-switch" onclick="toggleSetting(this)"></button>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-title">Appearance</div>
+                    <div class="setting-item">
+                        <div>Dark Mode</div>
+                        <button class="toggle-switch on" onclick="toggleSetting(this)"></button>
+                    </div>
+                    <div class="setting-item">
+                        <div>Compact View</div>
+                        <button class="toggle-switch" onclick="toggleSetting(this)"></button>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-title">Account</div>
+                    <div class="setting-item">
+                        <div>Current User</div>
+                        <div style="font-weight: 600;">harshitha</div>
+                    </div>
+                    <div class="setting-item">
+                        <div>Account Status</div>
+                        <div style="color: #31a24c; font-weight: 600;">Active</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // THEME TOGGLE
+        function toggleTheme() {
+            document.documentElement.classList.toggle('light-mode');
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = document.documentElement.classList.contains('light-mode') ? '☀️' : '🌙';
+            localStorage.setItem('theme', document.documentElement.classList.contains('light-mode') ? 'light' : 'dark');
+        }
+
+        // SECTION NAVIGATION
+        function showSection(section) {
+            document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const titles = {
+                dashboard: 'Dashboard',
+                runner: 'Test Runner',
+                files: 'File Manager',
+                settings: 'Settings'
+            };
+            document.getElementById('pageTitle').textContent = titles[section];
+
+            if (section === 'dashboard') {
+                setTimeout(drawCharts, 100);
+            }
+        }
+
+        // LOGOUT
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
+        }
+
+        // DRAW CHARTS
+        function drawCharts() {
+            drawPieChart();
+            drawBarChart();
+            drawLineChart();
+            drawBrowserChart();
+        }
+
+        function drawPieChart() {
+            const canvas = document.getElementById('pieChart');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 250;
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 80;
+
+            // Passed (94.4%)
+            ctx.fillStyle = '#31a24c';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI * 0.944);
+            ctx.fill();
+
+            // Failed (5.6%)
+            ctx.fillStyle = '#e50914';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 2 * Math.PI * 0.944, 2 * Math.PI);
+            ctx.fill();
+
+            // Labels
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Passed: 17 (94.4%)', centerX - 100, centerY - 120);
+            ctx.fillText('Failed: 1 (5.6%)', centerX + 100, centerY - 120);
+        }
+
+        function drawBarChart() {
+            const canvas = document.getElementById('barChart');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 250;
+
+            const data = [2.1, 1.8, 2.5, 2.3, 2.0, 2.4, 2.2];
+            const barWidth = canvas.width / (data.length + 1);
+            const maxValue = 3;
+            const chartHeight = 200;
+
+            ctx.strokeStyle = '#e50914';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(40, canvas.height - 30);
+            ctx.lineTo(canvas.width - 20, canvas.height - 30);
+            ctx.stroke();
+
+            data.forEach((value, i) => {
+                const x = 50 + i * barWidth;
+                const height = (value / maxValue) * chartHeight;
+                const y = canvas.height - 30 - height;
+
+                ctx.fillStyle = '#e50914';
+                ctx.fillRect(x, y, barWidth - 10, height);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(value.toFixed(1), x + (barWidth - 10) / 2, canvas.height - 10);
+            });
+        }
+
+        function drawLineChart() {
+            const canvas = document.getElementById('lineChart');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 250;
+
+            const data = [5, 8, 12, 15, 18, 16, 20];
+            const points = data.length;
+            const spacing = (canvas.width - 60) / (points - 1);
+
+            // Draw grid
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = 30 + (canvas.height - 60) * (i / 5);
+                ctx.beginPath();
+                ctx.moveTo(40, y);
+                ctx.lineTo(canvas.width - 20, y);
+                ctx.stroke();
+            }
+
+            // Draw line
+            ctx.strokeStyle = '#e50914';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            data.forEach((value, i) => {
+                const x = 40 + i * spacing;
+                const y = canvas.height - 30 - (value / 20) * (canvas.height - 60);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Draw points
+            ctx.fillStyle = '#e50914';
+            data.forEach((value, i) => {
+                const x = 40 + i * spacing;
+                const y = canvas.height - 30 - (value / 20) * (canvas.height - 60);
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+        }
+
+        function drawBrowserChart() {
+            const canvas = document.getElementById('browserChart');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 250;
+
+            const browsers = ['Chromium', 'Firefox', 'WebKit'];
+            const rates = [96.2, 92.1, 89.8];
+            const colors = ['#e50914', '#0099ff', '#31a24c'];
+            const barHeight = 40;
+
+            browsers.forEach((browser, i) => {
+                const y = 40 + i * 70;
+                const width = (rates[i] / 100) * (canvas.width - 150);
+
+                ctx.fillStyle = colors[i];
+                ctx.fillRect(120, y, width, barHeight);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(browser, 110, y + 25);
+
+                ctx.font = '12px Arial';
+                ctx.fillText(rates[i] + '%', width + 130, y + 25);
+            });
+        }
+
+        // RUN TEST
+        function runTest() {
+            const browser = document.getElementById('browser').value;
+            const url = document.getElementById('testUrl').value;
+            const username = document.getElementById('username').value;
+            const consoleEl = document.getElementById('console');
+            
+            consoleEl.innerHTML = '';
+            addLog(`[INFO] Starting test on ${browser}...`, 'info');
+            addLog(`[INFO] Launching browser...`, 'info');
+            
+            setTimeout(() => {
+                addLog(`[SUCCESS] Browser launched successfully`, 'success');
+                addLog(`[INFO] Navigating to ${url}...`, 'info');
+            }, 500);
+
+            setTimeout(() => {
+                addLog(`[SUCCESS] Page loaded`, 'success');
+                addLog(`[INFO] Entering username: ${username}...`, 'info');
+            }, 1000);
+
+            setTimeout(() => {
+                addLog(`[SUCCESS] Username entered`, 'success');
+                addLog(`[INFO] Entering password...`, 'info');
+            }, 1500);
+
+            setTimeout(() => {
+                addLog(`[SUCCESS] Password entered`, 'success');
+                addLog(`[INFO] Clicking login button...`, 'info');
+            }, 2000);
+
+            setTimeout(() => {
+                addLog(`[SUCCESS] Login successful`, 'success');
+                addLog(`[INFO] Verifying dashboard...`, 'info');
+            }, 2500);
+
+            setTimeout(() => {
+                addLog(`[SUCCESS] Dashboard verified`, 'success');
+                addLog(`[SUCCESS] Test completed successfully! ✓`, 'success');
+                addLog(`[INFO] Total time: 3.2 seconds`, 'info');
+            }, 3000);
+        }
+
+        function addLog(message, type = 'info') {
+            const consoleEl = document.getElementById('console');
+            const line = document.createElement('div');
+            line.className = `console-line log-${type}`;
+            line.textContent = message;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // FILE UPLOAD
+        function uploadFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const fileList = document.getElementById('fileList');
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">📄 ${file.name}</div>
+                        <div class="file-meta">${(file.size / 1024).toFixed(2)} KB • Just now</div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn-small" onclick="downloadFile('${file.name}')">Download</button>
+                        <button class="btn-small btn-delete" onclick="deleteFile('${file.name}')">Delete</button>
+                    </div>
+                `;
+                fileList.appendChild(item);
+                alert('File uploaded successfully!');
+            }
+        }
+
+        function downloadFile(name) {
+            alert(`Downloaded: ${name}`);
+        }
+
+        function deleteFile(name) {
+            if (confirm(`Delete ${name}?`)) {
+                event.target.closest('.file-item').remove();
+                alert('File deleted successfully!');
+            }
+        }
+
+        // SETTINGS
+        function toggleSetting(btn) {
+            btn.classList.toggle('on');
+        }
+
+        // LOAD THEME
+        window.addEventListener('load', () => {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-mode');
+                document.querySelector('.theme-toggle').textContent = '☀️';
+            }
+            drawCharts();
+        });
+
+        // DRAG AND DROP
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                uploadFile({ target: { files: files } });
+            }
+        });
+    </script>
+</body>
+</html>

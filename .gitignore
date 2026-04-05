@@ -1,0 +1,9 @@
+.vercel
+node_modules
+demo-server/uploads/
+playwright-report/
+allure-results/
+allure-report/
+test-results/
+portal-dist/
+.env

@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "name": "playwright-test-runner",
+  "builds": [
+    {
+      "src": "demo-server/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "demo-server/public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "demo-server/server.js"
+    },
+    {
+      "src": "/v2/(.*)",
+      "dest": "demo-server/server.js"
+    },
+    {
+      "src": "/iqbot/(.*)",
+      "dest": "demo-server/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "demo-server/public/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "DEMO_PORT": "3000"
+  }
+}
